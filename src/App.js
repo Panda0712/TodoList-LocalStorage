@@ -1,25 +1,69 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState } from "react";
+import Search from "./Search";
+import { Task } from "./Task";
 
-function App() {
+export default function App() {
+  const [value, setValue] = useState("");
+  const [todo, setTodo] = useState(
+    () => JSON.parse(localStorage.getItem("todo")) || []
+  );
+  const [selected, setSelected] = useState(null);
+
+  function handleUpdateAddTodo(value) {
+    if (!value) return;
+
+    if (selected) {
+      setTodo((todo) => {
+        const newTodo = todo.map((element) =>
+          element.id === selected ? { ...element, todoText: value } : element
+        );
+        localStorage.setItem("todo", JSON.stringify(newTodo));
+        return newTodo;
+      });
+      setValue("");
+      setSelected(null);
+      return;
+    }
+
+    const id = crypto.randomUUID();
+    const newTodo = {
+      id,
+      todoText: value,
+      completed: false,
+    };
+    setTodo((todo) => {
+      const addTodo = [...todo, newTodo];
+      localStorage.setItem("todo", JSON.stringify(addTodo));
+      return addTodo;
+    });
+    setValue("");
+  }
+
+  function handleDeleteTodo(id) {
+    setTodo((todo) => {
+      const newTodo = todo.filter((x) => x.id !== id);
+      localStorage.setItem("todo", JSON.stringify(newTodo));
+      return newTodo;
+    });
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="container">
+      <Search
+        value={value}
+        setValue={setValue}
+        onAddTodo={handleUpdateAddTodo}
+        selected={selected}
+      />
+      {todo.length > 0 && (
+        <Task
+          todo={todo}
+          setTodo={setTodo}
+          onDelete={handleDeleteTodo}
+          onUpdateTodo={setSelected}
+          setValue={setValue}
+        />
+      )}
     </div>
   );
 }
-
-export default App;
